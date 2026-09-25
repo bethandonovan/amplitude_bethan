@@ -1,7 +1,7 @@
 #Import libraries/packages needed, boto3, os, json, datetime, pandas?, dotenv, logging, requests
 import os
 import json
-from datetime import datetime 
+from datetime import datetime, timedelta
 import boto3
 import pandas as pd
 from dotenv import load_dotenv
@@ -9,6 +9,7 @@ import logging
 import requests
 import zipfile
 import gzip
+import logging
 
 #Add dotenv thing
 load_dotenv()
@@ -23,29 +24,56 @@ aws_bucket_name = os.getenv('DENG_BUCKET_NAME')
 amplitude_api_key = os.getenv('AMP_API_KEY')
 amplitude_secret_key = os.getenv('AMP_SECRET_KEY')
 
-#Now define any other variables needed https://amplitude.com/api/2/export
+# Calculate yesterday's date to dynamically pull the previous day's data
+yesterday = datetime.now() - timedelta(days=1)
+# Format the date as YYYYMMDD and append the required start (T00) and end (T23) hours
+start_date = yesterday.strftime('%Y%m%dT00')
+end_date = yesterday.strftime('%Y%m%dT23')
+
+#Now define any other variables needed
 url = "https://analytics.eu.amplitude.com/api/2/export"
-export_start_date = '20260923T00'
-export_end_date = '20260923T23'
+#define date parameters for the date range we want to export
+export_start_date = start_date
+export_end_date = end_date
+#Concatenate into a url 
 full_url = f'{url}?start={export_start_date}&end={export_end_date}'
 
 #Create folder to store data
 amplitude_dir = 'amplitude_data'
 os.makedirs(amplitude_dir, exist_ok = True)
 
-#Give the data file a name with timestamp - make zip file as thats the response format & a json file for later
+#Create a folder to store logs
+log_dir = 'log'
+os.makedirs(log_dir, exist_ok=True)
+
+
+#Give the data file a name with timestamp - make zip file as thats the response format & a json file for later & a file name for s3 bucket & a file for logging
 time_stamp = datetime.now().strftime('%Y-%m-%d %H-%M-%S')
 zip_file_name = f'{amplitude_dir}/{time_stamp}.zip'
 parsed_json_file = f'{amplitude_dir}/{time_stamp}_parsed.json'
 s3_file_name = f'{amplitude_dir}/{time_stamp}_Parsed.json'
-
-#Set up Amplitude API Connection
-response = requests.get(full_url ,auth=(amplitude_api_key, amplitude_secret_key))
-status = response.status_code
-print(status)
-
+log_filename = f'{log_dir}/{time_stamp}.log'
 #Empty list to put parsed zip -> json
 all_events = []
+
+#
+logging.basicConfig(
+    filename = log_filename,
+    format = '%(asctime)s - %(levelname)s - %(message)s',
+    level = logging.INFO
+)
+
+logger = logging.getLogger()
+logging.info('Logger Successfully Initialised')
+
+#Set up Amplitude API Connection
+#Getting data from the url 
+response = requests.get(full_url ,auth=(amplitude_api_key, amplitude_secret_key))
+#returning response to check that its pulling from the api correctly
+status = response.status_code
+print(f'This is the status code returned: {status}, investigate if necessary')
+logging.info(f'This is the status code returned: {status}, investigate if necessary')
+
 
 #If statement to seperate if there is an status code error
 if status == 200: 
@@ -55,6 +83,7 @@ if status == 200:
 		#write the content from response into our open file 
 		f.write(response.content)
 	print(f'Successfully Downloaded {zip_file_name}')
+	logging.info(f'Successfully Downloaded {zip_file_name}')
 
 	#open zipfile and parse the JSON inside
 	#opening the zip file and setting to 'read'
@@ -83,14 +112,22 @@ if status == 200:
 						
 
 	print(f'Successfully parsed {len(all_events)} events.')
+	logging.info(f'Successfully parsed {len(all_events)} events.')
 
 else: 
 	print(f'Failed to fetch data. Status code: {status}')
+	logging.critical(f'Failed to fetch data. Status code: {status}')
 
 #open the empty parsed_json_file and dump our new events list into the file
 with open(parsed_json_file, 'w') as file:
 	json.dump(all_events, file, indent=4)
 print(f'File {parsed_json_file} was successfully saved')
+logging.info(f'File {parsed_json_file} was successfully saved')
+
+if os.path.exists(zip_file_name):
+    os.remove(zip_file_name)
+    print(f'Cleaned up temporary zip file: {zip_file_name}')
+    logging.info(f'Cleaned up temporary zip file: {zip_file_name}')
 
 
 #Set up AWS S3 bucket connection
@@ -100,12 +137,12 @@ print(f'File {parsed_json_file} was successfully saved')
 #	aws_secret_access_key = aws_secret_key
 #)
 
-#Drop data into s3 bucket
-#s3_client.upload_file(
-#	Filename= parsed_json_file,
-#	Bucket = aws_bucket_name,
-#	Key = s3_file_name
-#)
+# Drop data into s3 bucket
+# s3_client.upload_file(
+# 	Filename= parsed_json_file,
+# 	Bucket = aws_bucket_name,
+# 	Key = s3_file_name
+# )
 
 
 
