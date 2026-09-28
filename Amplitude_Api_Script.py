@@ -124,6 +124,7 @@ with open(parsed_json_file, 'w') as file:
 print(f'File {parsed_json_file} was successfully saved')
 logging.info(f'File {parsed_json_file} was successfully saved')
 
+#deleted zip files after use
 if os.path.exists(zip_file_name):
     os.remove(zip_file_name)
     print(f'Cleaned up temporary zip file: {zip_file_name}')
