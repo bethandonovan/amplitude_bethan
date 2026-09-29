@@ -1,4 +1,4 @@
-#P1 Amplitude API
+# P1 Amplitude API
 ## Description
 The file 'Amplitude_API_Script' uses an API to connect to amplitude, pulls the data in nested .zip format. It unzips the .zip and the .gz layers, to reveal .json files, which are then dumped into a file and saved. There is a skeleton at the end of the code to upload this data file to an amazon s3 bucket.
 
