@@ -19,12 +19,14 @@ log_dir = 'log'
 timestamp = datetime.now().strftime('%Y-%m-%d %H-%M-%S')
 log_filename = f'{log_dir}/load_log_{timestamp}.log'
 
+#configure logger information
 logging.basicConfig(
     filename = log_filename,
     format = '%(asctime)s - %(levelname)s - %(message)s',
     level = logging.INFO
 )
 
+#setting up logger
 logger = logging.getLogger()
 print('Logger Successfully initialised')
 logging.info('Logger Successfully Initialised')
@@ -38,7 +40,6 @@ s3_client = boto3.client(
 )
 
 #define variables to upload data file, using names created in Amplitude_API_Script.py
-
 files_to_upload = os.listdir('data')
 print(files_to_upload)
 
@@ -55,7 +56,9 @@ for file in files_to_upload:
         )
         print(f'{file} has been uploaded successfully')
         logging.info(f'{file} has been uploaded successfully')
+        #deleted files once uploaded to s3
         os.remove(file_to_upload)
+    #collect more detailed error if having trouble uploading to s3 bucket 
     except ClientError as e:
         print(f'Unexpected error {e}')
         logging.warning('An error has occured')
