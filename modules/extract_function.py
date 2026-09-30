@@ -31,7 +31,6 @@ def extract_zip_unzip_to_json(url:str, start_date:str, end_date:str, data_dir:st
     os.makedirs(data_dir, exist_ok = True)
 
     #Give the data file a name with timestamp - make zip file as thats the response format & a json file for later & a file name for s3 bucket & a file for logging
-    time_stamp = datetime.now().strftime('%Y-%m-%d %H-%M-%S')
     zip_file_name = f'{data_dir}/{timestamp}.zip'
     parsed_json_file = f'{data_dir}/{timestamp}_parsed.json'
     #Empty list to put parsed zip -> json

@@ -19,3 +19,4 @@ def set_up_logging(dir_name:str, timestamp:str):
     )
 
     return logging.getLogger()
+    logging.info('Logger Successfully Initialised')
