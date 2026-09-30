@@ -39,7 +39,7 @@ export_end_date = end_date
 full_url = f'{url}?start={export_start_date}&end={export_end_date}'
 
 #Create folder to store data
-amplitude_dir = 'amplitude_data'
+amplitude_dir = 'data'
 os.makedirs(amplitude_dir, exist_ok = True)
 
 #Create a folder to store logs
