@@ -40,12 +40,12 @@ s3_client = boto3.client(
 )
 
 #define variables to upload data file, using names created in Amplitude_API_Script.py
-files_to_upload = os.listdir('data')
+files_to_upload = os.listdir('amplitude_data')
 print(files_to_upload)
 
 #loops through all the files in the data folder
 for file in files_to_upload:
-    file_to_upload = f'data/{file}'
+    file_to_upload = f'amplitude_data/{file}'
     print(file_to_upload)
     try:
     #upload the file to s3 bucket 
